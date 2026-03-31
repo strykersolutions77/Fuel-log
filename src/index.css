@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100;
+}
+
+#reader__scan_region {
+  background: #18181b; /* zinc-900 */
+}
+
+#reader__dashboard_section_swaplink {
+  display: none !important;
+}
+
+#reader__camera_selection {
+  @apply w-full p-2 bg-zinc-800 text-zinc-100 rounded-lg mb-2;
+}
+
+#reader__dashboard_section_csr button {
+  @apply px-4 py-2 bg-orange-500 text-white rounded-lg font-bold text-sm uppercase tracking-wider;
+}
+
+.html5-qrcode-element {
+  border: none !important;
+}
+

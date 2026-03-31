@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user goals and weight history",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "age": { "type": "number" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "height": { "type": "number", "description": "Height in cm" },
+        "activityLevel": { "type": "string", "enum": ["sedentary", "lightlyActive", "moderatelyActive", "veryActive", "extraActive"] },
+        "isSetupComplete": { "type": "boolean" },
+        "goals": {
+          "type": "object",
+          "properties": {
+            "calories": { "type": "number" },
+            "protein": { "type": "number" },
+            "carbs": { "type": "number" },
+            "fats": { "type": "number" },
+            "water": { "type": "number", "description": "Daily water goal in ounces" }
+          }
+        },
+        "weightHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string" },
+              "weight": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["uid", "email", "displayName", "goals"]
+    },
+    "FoodLog": {
+      "title": "Food Log",
+      "description": "Daily food intake logs",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "name": { "type": "string" },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fats": { "type": "number" },
+        "portion": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["userId", "timestamp", "name", "calories"]
+    },
+    "WaterLog": {
+      "title": "Water Log",
+      "description": "Daily water intake logs in ounces",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "amount": { "type": "number", "description": "Amount in ounces" }
+      },
+      "required": ["userId", "timestamp", "amount"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile data"
+    },
+    "/foodLogs/{logId}": {
+      "schema": "FoodLog",
+      "description": "Individual food logs"
+    },
+    "/waterLogs/{logId}": {
+      "schema": "WaterLog",
+      "description": "Individual water logs"
+    }
+  }
+}
