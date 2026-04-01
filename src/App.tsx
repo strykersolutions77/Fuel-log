@@ -17,7 +17,8 @@ import {
   Clock,
   Edit2,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { User } from 'firebase/auth';
@@ -118,7 +119,8 @@ const ProgressCircle = ({ current, goal, label, color, unit = '' }: { current: n
 };
 
 const FoodItem = ({ log, onDelete }: { log: FoodLog, onDelete: (id: string) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-2xl group">
@@ -139,32 +141,63 @@ const FoodItem = ({ log, onDelete }: { log: FoodLog, onDelete: (id: string) => v
         animate={{ 
           opacity: 1, 
           y: 0,
-          x: isOpen ? -80 : 0 
+          x: isDeleting ? -80 : 0 
         }}
         transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative flex items-center justify-between p-4 bg-zinc-900 border border-zinc-800 cursor-pointer select-none z-10"
+        className="relative bg-zinc-900 border border-zinc-800 z-10"
       >
-        <div className="flex items-center gap-3">
-          {log.imageUrl ? (
-            <img src={log.imageUrl} alt={log.name} className="w-12 h-12 rounded-xl object-cover" referrerPolicy="no-referrer" />
-          ) : (
-            <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
-              <Search size={20} />
+        <div 
+          className="flex items-center justify-between p-4 cursor-pointer select-none"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            {log.imageUrl ? (
+              <img src={log.imageUrl} alt={log.name} className="w-12 h-12 rounded-xl object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <Search size={20} />
+              </div>
+            )}
+            <div>
+              <h4 className="font-semibold text-zinc-100">{log.name}</h4>
+              <p className="text-xs text-zinc-500">{log.portion}</p>
             </div>
-          )}
-          <div>
-            <h4 className="font-semibold text-zinc-100">{log.name}</h4>
-            <p className="text-xs text-zinc-500">{log.portion}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="font-bold text-zinc-100">{log.calories} kcal</p>
+              <p className="text-[10px] text-zinc-500">
+                P: {log.protein}g · C: {log.carbs}g · F: {log.fats}g
+              </p>
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsDeleting(!isDeleting); }}
+              className="p-2 text-zinc-700 hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-bold text-zinc-100">{log.calories} kcal</p>
-          <p className="text-[10px] text-zinc-500">
-            P: {log.protein}g · C: {log.carbs}g · F: {log.fats}g
-            {log.alcohol ? ` · A: ${log.alcohol}g` : ''}
-          </p>
-        </div>
+
+        <AnimatePresence>
+          {isExpanded && log.reasoning && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-4 pb-4 overflow-hidden"
+            >
+              <div className="pt-3 border-t border-zinc-800">
+                <div className="flex items-start gap-2">
+                  <Info size={12} className="text-orange-500 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-zinc-400 italic leading-relaxed">
+                    {log.reasoning}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
@@ -640,6 +673,28 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
     }
   }, [estimate?.protein, estimate?.carbs, estimate?.fats, estimate?.alcohol]);
 
+  const [loadingMessage, setLoadingMessage] = useState('AI is analyzing your meal...');
+
+  useEffect(() => {
+    if (isEstimating) {
+      const messages = [
+        "Consulting nutrition database...",
+        "Verifying portion sizes...",
+        "Calculating macro breakdown...",
+        "Thinking like a coach...",
+        "Finalizing your nutrition plan..."
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        i = (i + 1) % messages.length;
+        setLoadingMessage(messages[i]);
+      }, 1500);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingMessage('AI is analyzing your meal...');
+    }
+  }, [isEstimating]);
+
   const handleSearch = useCallback(async () => {
     if (!query && !image) return;
     setIsEstimating(true);
@@ -798,7 +853,7 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
           {isEstimating && (
             <div className="py-12 text-center space-y-4">
               <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-zinc-500 font-medium">AI is analyzing your meal...</p>
+              <p className="text-zinc-500 font-medium animate-pulse">{loadingMessage}</p>
             </div>
           )}
 

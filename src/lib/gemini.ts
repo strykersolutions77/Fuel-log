@@ -12,23 +12,20 @@ export async function estimateNutrition(text?: string, image?: { data: string; m
   
   const model = "gemini-3-flash-preview";
   
-  const prompt = `Analyze this food or drink item. 
+  const prompt = `You are a Professional Nutrition Coach and Dietitian. 
+  Analyze this food or drink item with expert precision.
   ${text ? `Description: ${text}` : ""}
   ${image ? "An image of the item is provided." : ""}
   
   Provide a structured nutritional estimate including calories, protein, carbs, fats, and alcohol (in grams).
   
   CRITICAL INSTRUCTIONS:
-  1. Handle both food and beverages (including alcoholic drinks like beer, wine, spirits).
-  2. For alcoholic drinks, you MUST calculate the alcohol content in grams.
-  3. CALORIE CALCULATION RULE: The "calories" field MUST be the sum of:
-     - (protein * 4)
-     - (carbs * 4)
-     - (fats * 9)
-     - (alcohol * 7)
-  4. Alcohol contains 7 kcal per gram. This is a common point of error—do NOT ignore it.
-  5. Be realistic about portion sizes. If the description specifies a quantity (e.g., "12oz bottle", "pint", "glass"), use that exactly.
-  6. If the item is a specific brand or type (e.g., "IPA beer", "Light beer", "Red wine"), use nutritional data specific to that category.
+  1. PERSONA: Act as a supportive but firm nutrition coach.
+  2. SEARCH: Use Google Search to verify nutritional data for specific brands, restaurant menu items, or unique food types mentioned.
+  3. CHAIN OF THOUGHT: In the 'reasoning' field, first break down the components of the meal/drink, then provide actionable coaching advice (e.g., "Great protein choice, but watch the sodium in this brand").
+  4. ALCOHOL: For alcoholic drinks, you MUST calculate the alcohol content in grams (7 kcal/g).
+  5. CALORIE CALCULATION RULE: The "calories" field MUST be exactly: (protein * 4) + (carbs * 4) + (fats * 9) + (alcohol * 7).
+  6. PORTIONS: Be precise about portion sizes. If a specific quantity is mentioned (e.g., "12oz", "pint"), use it.
   
   Return the data as a JSON object.`;
 
@@ -41,6 +38,7 @@ export async function estimateNutrition(text?: string, image?: { data: string; m
     model,
     contents: { parts },
     config: {
+      tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -52,7 +50,7 @@ export async function estimateNutrition(text?: string, image?: { data: string; m
           fats: { type: Type.NUMBER },
           alcohol: { type: Type.NUMBER, description: "Alcohol content in grams" },
           portion: { type: Type.STRING },
-          reasoning: { type: Type.STRING }
+          reasoning: { type: Type.STRING, description: "Breakdown of components followed by actionable coaching advice." }
         },
         required: ["name", "calories", "protein", "carbs", "fats", "alcohol", "portion", "reasoning"]
       }
