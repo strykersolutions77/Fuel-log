@@ -1,5 +1,5 @@
 {
   "name": "Fuel Log",
   "description": "A weight loss tracker with an AI companion that reacts to your eating habits. Features AI food recognition and macro tracking.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
 }

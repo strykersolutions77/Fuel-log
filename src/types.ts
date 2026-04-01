@@ -32,6 +32,7 @@ export interface FoodLog {
   alcohol?: number;
   portion: string;
   imageUrl?: string;
+  reasoning?: string;
 }
 
 export interface WaterLog {
