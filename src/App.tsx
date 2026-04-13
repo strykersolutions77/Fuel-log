@@ -703,6 +703,10 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
         f.name.toLowerCase().includes(query.toLowerCase())
       ).slice(0, 5);
       setVerifiedResults(filtered);
+    } else if (query.trim().length === 0) {
+      // Show featured staples when empty
+      const featured = ["Chicken Breast", "Egg (Large)", "Salmon", "Avocado", "Greek Yogurt (Non-fat)"];
+      setVerifiedResults(COMMON_FOODS.filter(f => featured.includes(f.name)).slice(0, 5));
     } else {
       setVerifiedResults([]);
     }
@@ -867,7 +871,9 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-zinc-500 mb-2">
                 <Check size={14} className="text-lime-500" />
-                <h3 className="text-xs font-bold uppercase tracking-widest">Verified Database</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest">
+                  {query.trim().length === 0 ? 'Featured Staples' : 'Verified Database'}
+                </h3>
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {verifiedResults.map((food, idx) => (
