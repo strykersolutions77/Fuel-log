@@ -266,9 +266,21 @@ const CalorieTracker = ({ current, goal }: { current: number, goal: number }) =>
 };
 
 const WaterTracker = ({ current, goal, onAdd }: { current: number, goal: number, onAdd: (amount: number) => void }) => {
+  const [isCustom, setIsCustom] = useState(false);
+  const [customValue, setCustomValue] = useState('');
   const isOverGoal = goal > 0 && current > goal;
   const percentage = goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
   
+  const handleCustomSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseInt(customValue);
+    if (!isNaN(amount) && amount > 0) {
+      onAdd(amount);
+      setCustomValue('');
+      setIsCustom(false);
+    }
+  };
+
   return (
     <div className="bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-800 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
       {/* Bubble Container */}
@@ -315,7 +327,7 @@ const WaterTracker = ({ current, goal, onAdd }: { current: number, goal: number,
         </div>
 
         <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-          {[8, 16, 24].map(amount => (
+          {[8, 16].map(amount => (
             <button 
               key={amount}
               onClick={() => onAdd(amount)}
@@ -325,6 +337,40 @@ const WaterTracker = ({ current, goal, onAdd }: { current: number, goal: number,
               {amount}oz
             </button>
           ))}
+          
+          {isCustom ? (
+            <form onSubmit={handleCustomSubmit} className="flex gap-2">
+              <input
+                autoFocus
+                type="number"
+                value={customValue}
+                onChange={(e) => setCustomValue(e.target.value)}
+                placeholder="oz"
+                className="w-20 px-4 py-3 bg-zinc-800 border border-blue-500/30 rounded-2xl text-sm font-bold text-zinc-100 focus:outline-none focus:border-blue-500"
+              />
+              <button 
+                type="submit"
+                className="px-4 py-3 bg-blue-500 text-white rounded-2xl font-bold text-sm hover:bg-blue-600 transition-all active:scale-95"
+              >
+                Add
+              </button>
+              <button 
+                type="button"
+                onClick={() => setIsCustom(false)}
+                className="p-3 text-zinc-500 hover:text-zinc-300"
+              >
+                <X size={16} />
+              </button>
+            </form>
+          ) : (
+            <button 
+              onClick={() => setIsCustom(true)}
+              className="px-4 py-3 bg-blue-500/10 text-blue-500 rounded-2xl font-bold text-sm border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all active:scale-95 flex items-center gap-2"
+            >
+              <Edit2 size={14} />
+              Custom
+            </button>
+          )}
         </div>
       </div>
     </div>
