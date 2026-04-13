@@ -27,6 +27,7 @@ import { FoodLog, NutritionEstimate, UserProfile, WaterLog } from './types';
 import { estimateNutrition } from './lib/gemini';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from 'recharts';
 import TDEECalculator from './components/TDEECalculator';
+import { COMMON_FOODS } from './data/commonFoods';
 
 // --- Error Boundary ---
 
@@ -636,6 +637,7 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
   const [isManual, setIsManual] = useState(false);
   const [recentFoodLogs, setRecentFoodLogs] = useState<FoodLog[]>([]);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [verifiedResults, setVerifiedResults] = useState<NutritionEstimate[]>([]);
   const [manualFood, setManualFood] = useState({
     name: '',
     calories: 0,
@@ -694,6 +696,17 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
       setLoadingMessage('AI is analyzing your meal...');
     }
   }, [isEstimating]);
+
+  useEffect(() => {
+    if (query.trim().length > 1) {
+      const filtered = COMMON_FOODS.filter(f => 
+        f.name.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
+      setVerifiedResults(filtered);
+    } else {
+      setVerifiedResults([]);
+    }
+  }, [query]);
 
   const handleSearch = useCallback(async () => {
     if (!query && !image) return;
@@ -847,6 +860,33 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
             <div className="relative rounded-3xl overflow-hidden aspect-video shadow-lg">
               <img src={image} className="w-full h-full object-cover" alt="Food" />
               <button onClick={() => { setImage(null); setEstimate(null); }} className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full"><X size={16} /></button>
+            </div>
+          )}
+
+          {verifiedResults.length > 0 && !estimate && !isEstimating && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-zinc-500 mb-2">
+                <Check size={14} className="text-lime-500" />
+                <h3 className="text-xs font-bold uppercase tracking-widest">Verified Database</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {verifiedResults.map((food, idx) => (
+                  <button
+                    key={`verified-${idx}`}
+                    onClick={() => setEstimate(food)}
+                    className="flex items-center justify-between p-4 bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-lime-500/50 transition-all text-left group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-zinc-100">{food.name}</h4>
+                        <span className="text-[10px] bg-lime-500/10 text-lime-500 px-1.5 py-0.5 rounded-md font-bold uppercase">Verified</span>
+                      </div>
+                      <p className="text-xs text-zinc-500">{food.portion} • {food.calories} kcal</p>
+                    </div>
+                    <Plus size={18} className="text-lime-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
