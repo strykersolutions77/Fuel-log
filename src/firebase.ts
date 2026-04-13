@@ -72,7 +72,20 @@ async function testConnection() {
 testConnection();
 
 export async function signIn() {
-  return signInWithPopup(auth, googleProvider);
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result;
+  } catch (error: any) {
+    console.error("Detailed Sign-In Error:", error.code, error.message);
+    if (error.code === 'auth/unauthorized-domain') {
+      alert("This domain is not authorized in Firebase. Please add " + window.location.hostname + " to your Firebase Authorized Domains.");
+    } else if (error.code === 'auth/operation-not-allowed') {
+      alert("Google Sign-In is not enabled in your Firebase Console.");
+    } else {
+      alert("Sign-in failed: " + error.message);
+    }
+    throw error;
+  }
 }
 
 export async function signOut() {
