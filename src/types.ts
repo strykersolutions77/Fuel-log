@@ -20,6 +20,8 @@ export interface UserProfile {
   }[];
 }
 
+export type FoodCategory = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack' | 'Drinks';
+
 export interface FoodLog {
   id: string;
   userId: string;
@@ -33,6 +35,7 @@ export interface FoodLog {
   portion: string;
   imageUrl?: string;
   reasoning?: string;
+  category?: FoodCategory;
 }
 
 export interface WaterLog {
@@ -51,4 +54,5 @@ export interface NutritionEstimate {
   alcohol?: number;
   portion: string;
   reasoning: string;
+  category?: FoodCategory;
 }

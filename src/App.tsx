@@ -23,7 +23,7 @@ import {
 import { useAuth } from './hooks/useAuth';
 import { User } from 'firebase/auth';
 import { signIn, signOut, subscribeToDailyLogs, logFood, updateGoals, logWeight, deleteFoodLog, logWater, subscribeToDailyWater, getHistoricalLogs, getRecentFoodLogs } from './firebase';
-import { FoodLog, NutritionEstimate, UserProfile, WaterLog } from './types';
+import { FoodLog, NutritionEstimate, UserProfile, WaterLog, FoodCategory } from './types';
 import { estimateNutrition } from './lib/gemini';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from 'recharts';
 import TDEECalculator from './components/TDEECalculator';
@@ -603,7 +603,41 @@ export default function App() {
                 <p className="text-zinc-500 italic">Nothing logged yet. Don't starve yourself.</p>
               </div>
             ) : (
-              logs.map(log => <FoodItem key={log.id} log={log} onDelete={deleteFoodLog} />)
+              <div className="space-y-8">
+                {['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drinks'].map(category => {
+                  const categoryLogs = logs.filter(log => log.category === category || (!log.category && category === 'Snack'));
+                  if (categoryLogs.length === 0) return null;
+                  
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center gap-2 px-2">
+                        <div className="w-1 h-4 bg-orange-500 rounded-full" />
+                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">{category}</h3>
+                        <span className="text-[10px] font-bold text-zinc-700 ml-auto">
+                          {categoryLogs.reduce((acc, log) => acc + log.calories, 0)} kcal
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {categoryLogs.map(log => (
+                          <FoodItem key={log.id} log={log} onDelete={deleteFoodLog} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Fallback for any logs that might not match (though filter above handles it) */}
+                {logs.filter(log => !['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drinks'].includes(log.category || '')).length > 0 && (
+                   <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-2">
+                      <div className="w-1 h-4 bg-zinc-700 rounded-full" />
+                      <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">Other</h3>
+                    </div>
+                    {logs.filter(log => !['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drinks'].includes(log.category || '')).map(log => (
+                      <FoodItem key={log.id} log={log} onDelete={deleteFoodLog} />
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </>
         )}
@@ -691,8 +725,11 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
     carbs: 0,
     fats: 0,
     alcohol: 0,
-    portion: '1 serving'
+    portion: '1 serving',
+    category: 'Breakfast' as FoodCategory
   });
+
+  const CATEGORIES: FoodCategory[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drinks'];
 
   useEffect(() => {
     if (user) {
@@ -769,7 +806,7 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
         imgInput = { data: image.split(',')[1], mimeType: 'image/jpeg' };
       }
       const result = await estimateNutrition(query || undefined, imgInput);
-      setEstimate(result);
+      setEstimate({ ...result, category: 'Breakfast' });
     } catch (e) {
       console.error(e);
       setError("AI failed to analyze your meal. Try manual entry.");
@@ -925,7 +962,7 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
                 {verifiedResults.map((food, idx) => (
                   <button
                     key={`verified-${idx}`}
-                    onClick={() => setEstimate(food)}
+                    onClick={() => setEstimate({ ...food, category: 'Breakfast' })}
                     className="flex items-center justify-between p-4 bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-lime-500/50 transition-all text-left group"
                   >
                     <div>
@@ -1034,6 +1071,21 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
                 </div>
               </div>
 
+              <div className="mb-6">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Category</label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setEstimate({ ...estimate, category: cat })}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all ${estimate.category === cat ? 'bg-orange-500 text-white' : 'bg-zinc-950/50 text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {estimate.reasoning && (
                 <textarea 
                   className="w-full text-xs text-zinc-400 italic mb-6 leading-relaxed bg-transparent border-none focus:ring-0 p-0 resize-none h-12"
@@ -1080,7 +1132,8 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
                       fats: log.fats,
                       alcohol: log.alcohol || 0,
                       portion: log.portion,
-                      reasoning: 'From your history'
+                      reasoning: 'From your history',
+                      category: log.category || 'Breakfast'
                     })}
                     className="flex items-center justify-between p-4 bg-zinc-900 rounded-2xl border border-zinc-800 hover:bg-zinc-800 transition-all text-left"
                   >
@@ -1171,6 +1224,21 @@ function FoodSearchView({ onClose, onLog, user }: { onClose: () => void, onLog: 
                   placeholder="0"
                   onChange={(e) => setManualFood({ ...manualFood, alcohol: parseFloat(e.target.value) || 0 })}
                 />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Category</label>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setManualFood({ ...manualFood, category: cat })}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-tight transition-all ${manualFood.category === cat ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

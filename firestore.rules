@@ -29,7 +29,7 @@ service cloud.firestore {
 
     function isValidFoodLog(data) {
       return data.keys().hasAll(['userId', 'timestamp', 'name', 'calories', 'protein', 'carbs', 'fats', 'portion']) &&
-             data.keys().hasOnly(['userId', 'timestamp', 'name', 'calories', 'protein', 'carbs', 'fats', 'alcohol', 'portion', 'reasoning', 'imageUrl']) &&
+             data.keys().hasOnly(['userId', 'timestamp', 'name', 'calories', 'protein', 'carbs', 'fats', 'alcohol', 'portion', 'reasoning', 'imageUrl', 'category']) &&
              data.userId == request.auth.uid &&
              data.name is string && data.name.size() > 0 && data.name.size() < 250 &&
              data.calories is number && data.calories >= 0 &&
@@ -40,7 +40,8 @@ service cloud.firestore {
              data.portion is string && data.portion.size() > 0 &&
              data.timestamp is number &&
              (!('reasoning' in data) || (data.reasoning is string && data.reasoning.size() < 1000)) &&
-             (!('imageUrl' in data) || data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() < 1000000));
+             (!('imageUrl' in data) || data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
+             (!('category' in data) || data.category in ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drinks']);
     }
 
     function isValidWaterLog(data) {
